@@ -1,0 +1,17 @@
+### Test environment variables
+GET {{host}}/get
+X-API-Key: {{api_key}}
+X-Timeout: {{timeout}}
+X-Request-ID: {{$uuid}}
+
+### Test POST with environment
+POST {{host}}/post
+Content-Type: application/json
+X-API-Key: {{api_key}}
+
+{
+  "environment": "development",
+  "api_key": "{{api_key}}",
+  "timeout": {{timeout}},
+  "request_id": "{{$uuid}}"
+}

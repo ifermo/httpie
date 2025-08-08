@@ -1,0 +1,25 @@
+@host = https://httpbin.org
+@token = my-secret-token
+@user_id = 123
+
+### Test with variables
+GET {{host}}/get
+Authorization: Bearer {{token}}
+X-User-ID: {{user_id}}
+
+### Test with dynamic variables
+POST {{host}}/post
+Content-Type: application/json
+X-Request-ID: {{$uuid}}
+X-Timestamp: {{$timestamp}}
+X-Random: {{$randomInt}}
+
+{
+  "user_id": "{{user_id}}",
+  "timestamp": {{$timestamp}},
+  "random_value": {{$randomInt}}
+}
+
+### Test environment variable
+GET {{host}}/headers
+X-Home-Dir: {{$processEnv.HOME}}

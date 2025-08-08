@@ -1,0 +1,18 @@
+@host = https://httpbin.org
+
+### Test file reading
+POST {{host}}/post
+Content-Type: application/json
+X-Request-ID: {{$uuid}}
+
+< ./test_data.json
+
+### Test inline JSON
+POST {{host}}/post
+Content-Type: application/json
+
+{
+  "message": "This is inline JSON",
+  "timestamp": {{$timestamp}},
+  "uuid": "{{$uuid}}"
+}

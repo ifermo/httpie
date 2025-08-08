@@ -20,7 +20,7 @@ pub use variable::VariableReplacer;
 
 // 常量定义
 pub const DEFAULT_HTTP_FILE: &str = "./test.http";
-pub const DEFAULT_ENV_FILE: &str = "http-client.env.json";
+pub const DEFAULT_ENV_FILE: &str = "httpie.env.json";
 pub const DEFAULT_ENVIRONMENT: &str = "development";
 pub const SUPPORTED_METHODS: &[&str] = &[
     "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS", "GRAPHQL",
