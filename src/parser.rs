@@ -41,12 +41,12 @@ impl HttpParser {
 
         for line in content.lines() {
             let line = line.trim();
-            if line.starts_with('@') {
-                if let Some(eq_pos) = line.find('=') {
-                    let key = line[1..eq_pos].trim().to_string();
-                    let value = line[eq_pos + 1..].trim().to_string();
-                    file_variables.insert(key, value);
-                }
+            if line.starts_with('@')
+                && let Some(eq_pos) = line.find('=')
+            {
+                let key = line[1..eq_pos].trim().to_string();
+                let value = line[eq_pos + 1..].trim().to_string();
+                file_variables.insert(key, value);
             }
         }
 
@@ -172,26 +172,61 @@ impl HttpParser {
             }
         }
 
-        // 解析请求体
-        let body = if let Some(start_idx) = body_start_idx {
+        // 解析请求体和响应处理器
+        let mut body = None;
+        let mut response_handler = None;
+
+        if let Some(start_idx) = body_start_idx {
             let body_lines: Vec<&str> = lines.iter().skip(start_idx).copied().collect();
-            if body_lines.is_empty() {
-                None
-            } else {
-                let body_content = body_lines.join("\n").trim().to_string();
-                if body_content.is_empty() {
-                    None
+            if !body_lines.is_empty() {
+                // 查找响应处理器分隔符
+                let mut handler_start_idx = None;
+                for (i, line) in body_lines.iter().enumerate() {
+                    if line.trim() == "> {%" {
+                        handler_start_idx = Some(i);
+                        break;
+                    }
+                }
+
+                if let Some(handler_idx) = handler_start_idx {
+                    // 分离请求体和响应处理器
+                    let body_content = body_lines[..handler_idx].join("\n").trim().to_string();
+                    if !body_content.is_empty() {
+                        body = Some(replacer.replace(&body_content));
+                    }
+
+                    // 解析响应处理器脚本
+                    let handler_lines: Vec<&str> =
+                        body_lines.iter().skip(handler_idx + 1).copied().collect();
+                    let mut script_lines = Vec::new();
+
+                    for line in handler_lines {
+                        if line.trim() == "%}" {
+                            break;
+                        }
+                        script_lines.push(line);
+                    }
+
+                    if !script_lines.is_empty() {
+                        let script_content = script_lines.join("\n").trim().to_string();
+                        if !script_content.is_empty() {
+                            response_handler = Some(script_content);
+                        }
+                    }
                 } else {
-                    Some(replacer.replace(&body_content))
+                    // 没有响应处理器，全部作为请求体
+                    let body_content = body_lines.join("\n").trim().to_string();
+                    if !body_content.is_empty() {
+                        body = Some(replacer.replace(&body_content));
+                    }
                 }
             }
-        } else {
-            None
-        };
+        }
 
         let request = HttpRequest::new(name, method, url)
             .with_headers(headers)
-            .with_body(body);
+            .with_body(body)
+            .with_response_handler(response_handler);
 
         Ok(Some(request))
     }

@@ -20,6 +20,10 @@ pub enum HttpieError {
     FileNotFound(String),
     #[error("Invalid request format: {0}")]
     InvalidRequest(String),
+    #[error("Script execution error: {0}")]
+    ScriptError(String),
+    #[error("Script parsing error: {0}")]
+    ScriptParsingError(String),
 }
 
 /// Result类型别名，简化错误处理

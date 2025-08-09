@@ -8,6 +8,7 @@ pub mod environment;
 pub mod error;
 pub mod models;
 pub mod parser;
+pub mod script;
 pub mod variable;
 
 // 重新导出主要的公共API
@@ -16,6 +17,7 @@ pub use environment::EnvironmentLoader;
 pub use error::HttpieError;
 pub use models::{Environment, HttpRequest};
 pub use parser::HttpParser;
+pub use script::{ResponseObject, ScriptEngine, TestResult};
 pub use variable::VariableReplacer;
 
 // 常量定义

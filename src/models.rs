@@ -17,6 +17,7 @@ pub struct HttpRequest {
     pub url: String,
     pub headers: HashMap<String, String>,
     pub body: Option<String>,
+    pub response_handler: Option<String>,
 }
 
 impl HttpRequest {
@@ -28,6 +29,7 @@ impl HttpRequest {
             url,
             headers: HashMap::new(),
             body: None,
+            response_handler: None,
         }
     }
 
@@ -40,6 +42,12 @@ impl HttpRequest {
     /// 设置请求体
     pub fn with_body(mut self, body: Option<String>) -> Self {
         self.body = body;
+        self
+    }
+
+    /// 设置响应处理器脚本
+    pub fn with_response_handler(mut self, response_handler: Option<String>) -> Self {
+        self.response_handler = response_handler;
         self
     }
 }

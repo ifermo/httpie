@@ -16,3 +16,5 @@ bytes = { version = "1.10", features = ["serde"] }
 regex = "1.11"
 uuid = { version = "1.17", features = ["v4"] }
 rand = "0.9"
+deno_core = "0.355.0"
+v8 = "0.104.0"

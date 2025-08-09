@@ -1,0 +1,67 @@
+@host = https://httpbin.org
+
+### 测试基本GET请求和响应处理
+GET {{host}}/get
+User-Agent: httpie-rust/0.1.0
+
+> {%
+    // 测试状态码
+    client.test("Status should be 200", function() {
+        client.assert(response.status === 200, "Expected status 200, got " + response.status);
+    });
+
+    // 测试响应头
+    client.test("Content-Type should be JSON", function() {
+        client.assert(response.contentType.includes("application/json"), "Expected JSON content type");
+    });
+
+    // 测试响应体
+    client.test("Response should contain URL", function() {
+        client.assert(response.body.url !== undefined, "Response should contain URL field");
+    });
+
+    // 设置全局变量
+    client.global.set("test_url", response.body.url);
+%}
+
+### 测试POST请求和全局变量使用
+POST {{host}}/post
+Content-Type: application/json
+
+{
+  "message": "Hello from httpie-rust",
+  "timestamp": "2024-01-01T00:00:00Z",
+  "previous_url": "{{test_url}}"
+}
+
+> {%
+    // 测试状态码
+    client.test("POST Status should be 200", function() {
+        client.assert(response.status === 200, "Expected status 200 for POST");
+    });
+
+    // 测试请求体回显
+    client.test("Request body should be echoed", function() {
+        const data = response.body.json;
+        client.assert(data.message === "Hello from httpie-rust", "Message should be echoed");
+    });
+
+    // 测试全局变量的使用
+    const previousUrl = client.global.get("test_url");
+    client.test("Global variable should be accessible", function() {
+        client.assert(previousUrl !== undefined, "Global variable test_url should be set");
+    });
+
+    console.log("Previous URL from global variable:", previousUrl);
+%}
+
+### 测试错误处理
+GET {{host}}/status/404
+
+> {%
+    client.test("Should handle 404 status", function() {
+        client.assert(response.status === 404, "Expected 404 status");
+    });
+
+    console.log("Successfully handled 404 response");
+%}

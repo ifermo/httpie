@@ -32,11 +32,8 @@ async fn main() -> Result<(), HttpieError> {
     let file_path = matches.get_one::<String>("file").unwrap();
     let case_name = matches.get_one::<String>("case");
 
-    // 解析HTTP请求
-    let base_path = Path::new(file_path).parent().unwrap_or(Path::new("."));
-
     // 尝试加载环境变量文件
-    let env_file = base_path.join(DEFAULT_ENV_FILE);
+    let env_file = Path::new(DEFAULT_ENV_FILE);
     let environment = if env_file.exists() {
         Environment::from_file(&env_file.to_string_lossy()).unwrap_or_else(|e| {
             eprintln!("Warning: Failed to load environment file: {e}");
@@ -61,13 +58,13 @@ async fn main() -> Result<(), HttpieError> {
 
     info!("Found {} request(s) in file", requests.len());
 
-    // 创建HTTP客户端
-    let client = HttpClient::default();
+    // 创建HTTP客户端并启用脚本功能
+    let mut client = HttpClient::default().with_script_engine()?;
 
     // 执行请求
     match case_name {
-        Some(case) => execute_specific_case(&client, &requests, case, file_path).await?,
-        None => execute_all_requests(&client, &requests).await?,
+        Some(case) => execute_specific_case(&mut client, &requests, case, file_path).await?,
+        None => execute_all_requests(&mut client, &requests).await?,
     }
 
     Ok(())
@@ -75,7 +72,7 @@ async fn main() -> Result<(), HttpieError> {
 
 /// 执行指定的测试用例
 async fn execute_specific_case(
-    client: &HttpClient,
+    client: &mut HttpClient,
     requests: &[HttpRequest],
     case_name: &str,
     _file_path: &str,
@@ -99,7 +96,7 @@ async fn execute_specific_case(
 
 /// 执行所有请求
 async fn execute_all_requests(
-    client: &HttpClient,
+    client: &mut HttpClient,
     requests: &[HttpRequest],
 ) -> Result<(), HttpieError> {
     info!("Executing all {} request(s)", requests.len());
