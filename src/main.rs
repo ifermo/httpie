@@ -1,4 +1,4 @@
-use clap::{Arg, Command};
+use clap::{Arg, ArgAction, Command};
 use std::path::Path;
 use tracing::{error, info};
 
@@ -27,10 +27,17 @@ async fn main() -> Result<(), HttpieError> {
                 .value_name("CASE")
                 .help("Specific test case to execute"),
         )
+        .arg(
+            Arg::new("quiet")
+                .long("quiet")
+                .help("Quiet mode: do not print HTTP responses")
+                .action(ArgAction::SetTrue),
+        )
         .get_matches();
 
     let file_path = matches.get_one::<String>("file").unwrap();
     let case_name = matches.get_one::<String>("case");
+    let quiet = matches.get_flag("quiet");
 
     // 尝试加载环境变量文件
     let env_file = Path::new(DEFAULT_ENV_FILE);
@@ -59,7 +66,9 @@ async fn main() -> Result<(), HttpieError> {
     info!("Found {} request(s) in file", requests.len());
 
     // 创建HTTP客户端并启用脚本功能
-    let mut client = HttpClient::default().with_script_engine()?;
+    let mut client = HttpClient::default()
+        .with_script_engine()?
+        .with_print_response(!quiet);
 
     // 执行请求
     match case_name {

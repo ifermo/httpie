@@ -17,3 +17,9 @@ regex = "1.11"
 uuid = { version = "1.17", features = ["v4"] }
 rand = "0.9"
 deno_core = "0.355.0"
+
+[dev-dependencies]
+tempfile = "3.8"
+tokio-test = "0.4"
+mockito = "1.2"
+assert_matches = "1.5"

@@ -88,10 +88,23 @@ impl<'a> VariableReplacer<'a> {
     /// 替换用户自定义变量（{{variable_name}}）
     fn replace_user_variables(&self, text: &str) -> String {
         let mut result = text.to_string();
+        let mut changed = true;
+        let mut iterations = 0;
+        const MAX_ITERATIONS: usize = 100; // 防止无限递归
 
-        for (key, value) in self.environment.variables() {
-            let pattern = format!("{{{{{key}}}}}");
-            result = result.replace(&pattern, value);
+        // 持续替换直到没有更多变化或达到最大迭代次数
+        while changed && iterations < MAX_ITERATIONS {
+            changed = false;
+            iterations += 1;
+
+            for (key, value) in self.environment.variables() {
+                let pattern = format!("{{{{{}}}}}", key);
+                let new_result = result.replace(&pattern, value);
+                if new_result != result {
+                    result = new_result;
+                    changed = true;
+                }
+            }
         }
 
         result

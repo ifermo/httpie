@@ -14,7 +14,7 @@ pub mod variable;
 // 重新导出主要的公共API
 pub use client::{HttpClient, ResponseFormatter};
 pub use environment::EnvironmentLoader;
-pub use error::HttpieError;
+pub use error::{HttpieError, Result};
 pub use models::{Environment, HttpRequest};
 pub use parser::HttpParser;
 pub use script::{ResponseObject, ScriptEngine, TestResult};

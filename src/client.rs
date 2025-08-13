@@ -13,6 +13,7 @@ pub struct HttpClient {
     client: Client,
     formatter: ResponseFormatter,
     script_engine: Option<ScriptEngine>,
+    print_response: bool,
 }
 
 impl Default for HttpClient {
@@ -21,6 +22,7 @@ impl Default for HttpClient {
             client: Client::new(),
             formatter: ResponseFormatter::new(),
             script_engine: None,
+            print_response: true,
         }
     }
 }
@@ -35,6 +37,12 @@ impl HttpClient {
     pub fn with_script_engine(mut self) -> Result<Self> {
         self.script_engine = Some(ScriptEngine::new()?);
         Ok(self)
+    }
+
+    /// 控制是否打印响应（默认打印）
+    pub fn with_print_response(mut self, enabled: bool) -> Self {
+        self.print_response = enabled;
+        self
     }
 
     /// 执行HTTP请求
@@ -69,20 +77,24 @@ impl HttpClient {
                 self.formatter
                     .format_test_results(&request.name, &test_results);
 
-                // 格式化并打印响应（使用克隆的响应对象）
-                self.formatter
-                    .format_response_from_object(&request.name, &response_obj)
-                    .await?;
+                // 格式化并打印响应（使用克隆的响应对象），受开关控制
+                if self.print_response {
+                    self.formatter
+                        .format_response_from_object(&request.name, &response_obj)
+                        .await?;
+                }
             } else {
                 return Err(crate::error::HttpieError::ScriptError(
                     "Script engine not initialized. Call with_script_engine() first.".to_string(),
                 ));
             }
         } else {
-            // 没有脚本，直接格式化并打印响应
-            self.formatter
-                .format_response(&request.name, response)
-                .await?;
+            // 没有脚本，直接格式化并打印响应（受开关控制）
+            if self.print_response {
+                self.formatter
+                    .format_response(&request.name, response)
+                    .await?;
+            }
         }
 
         Ok(())
