@@ -7,6 +7,8 @@ use crate::models::HttpRequest;
 use crate::script::{ResponseObject, ScriptEngine, TestResult};
 use reqwest::Client;
 use serde_json;
+use std::collections::HashMap;
+use std::net::SocketAddr;
 
 /// HTTP客户端
 pub struct HttpClient {
@@ -18,8 +20,13 @@ pub struct HttpClient {
 
 impl Default for HttpClient {
     fn default() -> Self {
+        let client = Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap_or_else(|_| Client::new());
+
         Self {
-            client: Client::new(),
+            client,
             formatter: ResponseFormatter::new(),
             script_engine: None,
             print_response: true,
@@ -43,6 +50,23 @@ impl HttpClient {
     pub fn with_print_response(mut self, enabled: bool) -> Self {
         self.print_response = enabled;
         self
+    }
+
+    pub fn with_dns_overrides(
+        mut self,
+        dns_overrides: &HashMap<String, SocketAddr>,
+    ) -> Result<Self> {
+        if dns_overrides.is_empty() {
+            return Ok(self);
+        }
+
+        let mut builder = Client::builder().no_proxy();
+        for (domain, addr) in dns_overrides {
+            builder = builder.resolve(domain, *addr);
+        }
+
+        self.client = builder.build()?;
+        Ok(self)
     }
 
     /// 执行HTTP请求

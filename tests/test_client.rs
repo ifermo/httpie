@@ -249,7 +249,7 @@ client.test("Data should be array", function() {
             .create_async()
             .await;
 
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
         let response = client
             .get(format!("{}/format_test", server.url()))
             .send()

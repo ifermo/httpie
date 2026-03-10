@@ -178,6 +178,36 @@ mod tests {
     }
 
     #[test]
+    fn test_environment_from_file_with_dns_overrides() {
+        let env_content = r#"{
+  "development": {
+    "API_KEY": "dev_key_123",
+    "TIMEOUT": 30,
+    "dns": {
+      "example.com": "127.0.0.1:8000",
+      "api.example.com": "10.0.0.2:443"
+    }
+  }
+}"#;
+
+        let temp_file = NamedTempFile::new().unwrap();
+        fs::write(temp_file.path(), env_content).unwrap();
+
+        let env = Environment::from_file(&temp_file.path().to_string_lossy()).unwrap();
+
+        assert_eq!(env.get("API_KEY"), Some(&"dev_key_123".to_string()));
+        assert_eq!(env.get("TIMEOUT"), Some(&"30".to_string()));
+        assert_eq!(
+            env.dns_overrides().get("example.com"),
+            Some(&"127.0.0.1:8000".parse().unwrap())
+        );
+        assert_eq!(
+            env.dns_overrides().get("api.example.com"),
+            Some(&"10.0.0.2:443".parse().unwrap())
+        );
+    }
+
+    #[test]
     fn test_environment_from_file_not_found() {
         let result = Environment::from_file("/non/existent/file.json");
         assert!(result.is_err());

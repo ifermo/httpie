@@ -8,6 +8,7 @@ use reqwest::Method;
 use serde_json;
 use std::collections::HashMap;
 use std::fs;
+use std::net::SocketAddr;
 
 /// HTTP请求结构体
 #[derive(Debug, Clone)]
@@ -56,6 +57,7 @@ impl HttpRequest {
 #[derive(Debug, Default, Clone)]
 pub struct Environment {
     variables: HashMap<String, String>,
+    dns_overrides: HashMap<String, SocketAddr>,
 }
 
 impl Environment {
@@ -69,14 +71,55 @@ impl Environment {
         let content = fs::read_to_string(file_path)
             .map_err(|_| HttpieError::FileNotFound(file_path.to_string()))?;
 
-        let env_data: HashMap<String, HashMap<String, String>> = serde_json::from_str(&content)?;
+        let env_data: serde_json::Value = serde_json::from_str(&content)?;
 
-        let variables = env_data
+        let mut variables = HashMap::new();
+        let mut dns_overrides = HashMap::new();
+
+        let Some(env_obj) = env_data
             .get(DEFAULT_ENVIRONMENT)
-            .cloned()
-            .unwrap_or_default();
+            .and_then(|v| v.as_object())
+        else {
+            return Ok(Self {
+                variables,
+                dns_overrides,
+            });
+        };
 
-        Ok(Self { variables })
+        for (key, value) in env_obj {
+            if key == "dns" {
+                if let Some(dns_obj) = value.as_object() {
+                    for (domain, addr_value) in dns_obj {
+                        let Some(addr_str) = addr_value.as_str() else {
+                            continue;
+                        };
+                        let addr: SocketAddr = addr_str.parse().map_err(|e| {
+                            HttpieError::Parse(format!(
+                                "Invalid dns override for '{domain}': {addr_str} ({e})"
+                            ))
+                        })?;
+                        dns_overrides.insert(domain.clone(), addr);
+                    }
+                }
+                continue;
+            }
+
+            let str_value = match value {
+                serde_json::Value::String(s) => Some(s.clone()),
+                serde_json::Value::Number(n) => Some(n.to_string()),
+                serde_json::Value::Bool(b) => Some(b.to_string()),
+                _ => None,
+            };
+
+            if let Some(str_value) = str_value {
+                variables.insert(key.clone(), str_value);
+            }
+        }
+
+        Ok(Self {
+            variables,
+            dns_overrides,
+        })
     }
 
     /// 获取变量值
@@ -97,5 +140,9 @@ impl Environment {
     /// 获取所有变量的引用
     pub fn variables(&self) -> &HashMap<String, String> {
         &self.variables
+    }
+
+    pub fn dns_overrides(&self) -> &HashMap<String, SocketAddr> {
+        &self.dns_overrides
     }
 }

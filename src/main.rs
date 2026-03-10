@@ -54,6 +54,7 @@ async fn main() -> Result<(), HttpieError> {
         Environment::new()
     };
 
+    let dns_overrides = environment.dns_overrides().clone();
     let mut parser = HttpParser::new(environment);
 
     let requests = parser.parse_file(file_path)?;
@@ -67,6 +68,7 @@ async fn main() -> Result<(), HttpieError> {
 
     // 创建HTTP客户端并启用脚本功能
     let mut client = HttpClient::default()
+        .with_dns_overrides(&dns_overrides)?
         .with_script_engine()?
         .with_print_response(!quiet);
 

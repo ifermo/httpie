@@ -20,7 +20,7 @@ mod tests {
     fn test_http_error() {
         // 创建一个模拟的reqwest错误
         let url = "https://invalid-url-that-does-not-exist.com";
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
 
         // 这个测试需要在异步环境中运行
         tokio_test::block_on(async {

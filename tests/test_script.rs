@@ -326,7 +326,7 @@ client.global.set("var3", {"nested": "object"});
             .create_async()
             .await;
 
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
         let response = client
             .get(format!("{}/test", server.url()))
             .send()
@@ -367,7 +367,7 @@ client.global.set("var3", {"nested": "object"});
             .create_async()
             .await;
 
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
         let response = client
             .get(format!("{}/text", server.url()))
             .send()
